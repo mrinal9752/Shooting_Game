@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+
+  <title>FLUX Game Admin</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #090d14;
+      color: #ffffff;
+    }
+
+    .container {
+      width: min(1000px, 92%);
+      margin: 50px auto;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #9aa8bc;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: #131d2d;
+      border: 1px solid #31496b;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #405777;
+      background: #0b1320;
+      color: white;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 8px;
+      background: #2f8df6;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #loginMessage,
+    #status {
+      margin-top: 12px;
+      color: #ff8d8d;
+    }
+
+    #dashboard {
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #26364e;
+    }
+
+    th {
+      color: #8ebcff;
+    }
+
+    .rank {
+      width: 70px;
+      font-weight: bold;
+    }
+
+    .kills {
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .top-player {
+      background: rgba(47, 141, 246, 0.12);
+    }
+
+    .online {
+      color: #72e58a;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>FLUX Game Admin</h1>
+
+    <p class="subtitle">
+      Private recruitment game leaderboard
+    </p>
+
+    <!-- LOGIN -->
+    <div id="loginCard" class="card">
+
+      <h2>Admin Login</h2>
+
+      <input
+        id="adminCode"
+        type="password"
+        placeholder="Enter admin access code"
+        autocomplete="off"
+      />
+
+      <button id="loginButton">
+        Login
+      </button>
+
+      <p id="loginMessage"></p>
+
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+
+      <div class="card">
+
+        <h2>Live Leaderboard</h2>
+
+        <p id="status" class="online">
+          Connected
+        </p>
+
+        <table>
+
+          <thead>
+            <tr>
+              <th class="rank">Rank</th>
+              <th>Participant</th>
+              <th>Player</th>
+              <th>Kills</th>
+              <th>Deaths</th>
+            </tr>
+          </thead>
+
+          <tbody id="leaderboardBody">
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  </div>
+  <script src="../game_server_config.js"></script>
+  <script src="admin.js"></script>
+
+</body>
+</html>

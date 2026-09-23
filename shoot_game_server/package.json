@@ -1,0 +1,17 @@
+{
+  "name": "shoot-game-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for shoot_game (2D multiplayer shooting web game)",
+  "main": "server.js",
+  "dependencies": {
+    "pathfinding": "^0.4.18",
+    "ws": "^7.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node server.js",
+    "test": "node smoke-test.js"
+  },
+  "author": "",
+  "license": "ISC"
+}

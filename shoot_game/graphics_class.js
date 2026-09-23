@@ -1,0 +1,353 @@
+class GraphicsClass {
+  constructor(canvas, uiCanvas, objectClass) {
+    this.canvas = canvas;
+    this.uiCanvas = uiCanvas;
+    this.drawingContext = canvas.getContext("2d");
+    this.screenWidth = canvas.width;
+    this.screenHeight = canvas.height;
+
+    this.sightEffectClass = new SightEffectClass(canvas.width, canvas.height);
+    this.uiClass = new UserInterfaceClass(uiCanvas);
+
+    this.cameraClass = new CameraClass(canvas);
+
+    // 모든 맵을 미리 구성해두고(히트박스/세그먼트 계산 포함) 라운드마다 교체한다
+    this.mapClasses = {};
+    const mapNames = Object.keys(MAP_REGISTRY);
+    for (let i = 0; i < mapNames.length; i++) {
+      this.mapClasses[mapNames[i]] = new MapClass(MAP_REGISTRY[mapNames[i]]);
+    }
+    this.currentMapName = DEFAULT_MAP_NAME;
+    this.mapClass = this.mapClasses[this.currentMapName];
+
+    this.objectClass = objectClass;
+    this.cameraClass.setLimit(
+      this.mapClass.getPixelWidth(),
+      this.mapClass.getPixelHeight(),
+    );
+
+    this.particleClass = new ParticleClass();
+    this.weatherClass = new WeatherClass(canvas.width, canvas.height);
+
+    this.survivorCharacterClass = new SurvivorCharacterClass();
+  }
+
+  setCameraPosition(x, y) {
+    this.cameraClass.setCameraPosition(x, y);
+  }
+
+  getMapName() {
+    return this.currentMapName;
+  }
+
+  // 활성 맵을 교체한다. 실제로 바뀌었으면 true (이미 같은 맵이면 false)
+  setMap(name) {
+    if (!this.mapClasses[name] || this.currentMapName === name) {
+      return false;
+    }
+    this.currentMapName = name;
+    this.mapClass = this.mapClasses[name];
+    this.cameraClass.setLimit(
+      this.mapClass.getPixelWidth(),
+      this.mapClass.getPixelHeight(),
+    );
+    return true;
+  }
+
+  shakeScreen(threshold, doFramesCount) {
+    this.remainShakeFrames = doFramesCount ? doFramesCount : 5;
+    this.shakeThreshold = threshold ? threshold : 5;
+  }
+
+  frame(players) {
+    this.beginScene(this.drawingContext, 0, 0, 0, 1);
+    if (debugClass.black) {
+      return;
+    }
+    if (systemClass.pointerLockMode && systemClass.getCurrentPlayerClass()) {
+      this.cameraClass.setRotate(
+        -(systemClass.getCurrentPlayerClass().getDirection() + 90) *
+          (Math.PI / 180),
+      );
+    } else {
+      this.cameraClass.setRotate(0.0);
+    }
+
+    if (
+      !this.mapClass.isLoaded() ||
+      !this.survivorCharacterClass.isLoaded() ||
+      !this.uiClass.isLoaded() ||
+      !systemClass.soundClass.isLoaded()
+    ) {
+      this.drawingContext.font = "bold 60px Arial";
+      this.drawingContext.textBaseline = "middle";
+      this.drawingContext.textAlign = "center";
+
+      this.drawingContext.fillStyle = "white";
+      this.drawingContext.fillText(
+        "LOADING",
+        this.screenWidth / 2,
+        this.screenHeight / 2,
+      );
+      return;
+    } else {
+      systemClass.chatClass.setVisible(true);
+    }
+
+    this.drawingContext.save();
+    if (this.cameraClass.getRotate() !== 0) {
+      this.drawingContext.translate(
+        this.screenWidth / 2,
+        this.screenHeight / 2,
+      );
+      this.drawingContext.rotate(this.cameraClass.getRotate());
+      this.drawingContext.translate(
+        -this.screenWidth / 2,
+        -this.screenHeight / 2,
+      );
+    }
+
+    if (this.remainShakeFrames && this.remainShakeFrames > 0) {
+      this.remainShakeFrames--;
+      this.drawingContext.translate(
+        this.shakeThreshold - Math.random() * (this.shakeThreshold * 2),
+        this.shakeThreshold - Math.random() * (this.shakeThreshold * 2),
+      );
+    }
+
+    if (this.mapClass) {
+      this.mapClass.drawMap(
+        this.drawingContext,
+        this.cameraClass,
+        this.screenWidth,
+        this.screenHeight,
+      );
+    }
+
+    if (this.objectClass) {
+      this.objectClass.drawObjects(
+        this.drawingContext,
+        this.cameraClass,
+        this.screenWidth,
+        this.screenHeight,
+      );
+    }
+
+    if (systemClass && systemClass.itemManagerClass) {
+      systemClass.itemManagerClass.drawItems(
+        this.drawingContext,
+        this.cameraClass,
+      );
+    }
+
+    if (this.sightEffectClass) {
+      this.sightEffectClass.updateSight(
+        players,
+        this.cameraClass,
+        this.objectClass,
+        this.mapClass,
+      );
+
+      if (players) {
+        for (let i = 0; i < players.length; i++) {
+          const player = players[players[i]];
+          if (player && !player.isOtherPlayer()) {
+            this.survivorCharacterClass.drawCharacter(
+              this.drawingContext,
+              player,
+              this.cameraClass,
+              this.screenWidth,
+              this.screenHeight,
+            );
+            break;
+          }
+        }
+      }
+
+      this.drawingContext.save();
+
+      if (!debugClass.debugGraphicsVisible) {
+        this.sightEffectClass.clipSight(this.drawingContext);
+      }
+    }
+
+    if (players) {
+      for (let i = 0; i < players.length; i++) {
+        const player = players[players[i]];
+        if (
+          player &&
+          player.isOtherPlayer() &&
+          this.cameraClass.containsPlayer(player)
+        ) {
+          this.survivorCharacterClass.drawCharacter(
+            this.drawingContext,
+            player,
+            this.cameraClass,
+            this.screenWidth,
+            this.screenHeight,
+          );
+        }
+      }
+    }
+
+    // PvE 몬스터(스켈레톤)도 시야 클립 영역 안에서만 보이게 다른 플레이어와 함께 그린다
+    if (systemClass && systemClass.monsterManagerClass) {
+      systemClass.monsterManagerClass.drawMonsters(
+        this.drawingContext,
+        this.cameraClass,
+      );
+    }
+
+
+
+    if (this.sightEffectClass) {
+      this.drawingContext.restore();
+      this.sightEffectClass.drawSightLighting(this.drawingContext);
+    }
+
+    this.drawBullet(players);
+    this.drawStep(players);
+
+    if (this.particleClass) {
+      this.particleClass.drawParticles(this.drawingContext, this.cameraClass);
+    }
+
+    this.drawingContext.restore();
+
+    if (this.uiClass) {
+      this.uiClass.update(this.mapClass, players);
+    }
+
+    this.endScene();
+  }
+
+  drawStep(players) {
+    if (players) {
+      const now = performance.now();
+      for (let i = 0; i < players.length; i++) {
+        const player = players[players[i]];
+        if (player && player.isOtherPlayer()) {
+          const centerX =
+            player.getCenterX() - this.cameraClass.getViewboxLeft();
+          const centerY =
+            player.getCenterY() - this.cameraClass.getViewboxTop();
+          const speed = Math.sqrt(
+            player.getSpeedX() * player.getSpeedX() +
+              player.getSpeedY() * player.getSpeedY(),
+          );
+          if (!player.lastStepInfo) {
+            player.lastStepInfo = {
+              time: 0,
+              size: 0,
+            };
+          }
+
+          const interval = now - player.lastStepInfo.time;
+          if (interval < 200) {
+            this.drawingContext.beginPath();
+            this.drawingContext.arc(
+              centerX,
+              centerY,
+              player.lastStepInfo.size * (interval / 200),
+              0,
+              2 * Math.PI,
+              false,
+            );
+            this.drawingContext.strokeStyle = `rgba(200, 200, 200, ${(200 - interval) / 200})`;
+            this.drawingContext.stroke();
+          } else {
+            if (speed > 3 && interval > 400) {
+              player.lastStepInfo = {
+                time: now,
+                size: 5,
+              };
+            }
+          }
+        }
+      }
+    }
+  }
+
+  drawBullet(players) {
+    if (players) {
+      for (let i = 0; i < players.length; i++) {
+        const player = players[players[i]];
+        if (
+          player &&
+          player.getStatus() === "shoot" &&
+          player.getCurrentStatusFrame() === 0
+        ) {
+          const shootInfo = player.getShootInfo();
+          if (shootInfo) {
+            const targets = shootInfo.targets
+              ? shootInfo.targets
+              : [shootInfo.target];
+            this.drawingContext.strokeStyle = "yellow";
+            for (let t = 0; t < targets.length; t++) {
+              const hit = shootInfo.hitObjectIntersections
+                ? shootInfo.hitObjectIntersections[t]
+                : undefined;
+              const endPoint = hit ? hit : targets[t];
+              this.drawingContext.beginPath();
+              this.drawingContext.moveTo(
+                shootInfo.muzzle.x - this.cameraClass.getViewboxLeft(),
+                shootInfo.muzzle.y - this.cameraClass.getViewboxTop(),
+              );
+              this.drawingContext.lineTo(
+                endPoint.x - this.cameraClass.getViewboxLeft(),
+                endPoint.y - this.cameraClass.getViewboxTop(),
+              );
+              this.drawingContext.stroke();
+            }
+          }
+        }
+      }
+    }
+  }
+
+  drawPlayerName(playerClass, cameraClass) {
+    if (playerClass) {
+      const text = playerClass.getPlayerDescription();
+      const fontHeightPixel = 14;
+      const boxPadding = 5;
+
+      const centerX = cameraClass.getCameraX() - cameraClass.getViewboxLeft();
+      const centerY =
+        cameraClass.getCameraY() - cameraClass.getViewboxTop() + boxPadding;
+
+      this.drawingContext.font =
+        "normal " + fontHeightPixel + "px MapoPeacefull";
+      this.drawingContext.textBaseline = "top";
+      this.drawingContext.textAlign = "center";
+      var textWidth = this.drawingContext.measureText(text).width;
+
+      this.drawingContext.beginPath();
+      this.drawingContext.roundedRect(
+        centerX - textWidth / 2 - boxPadding,
+        centerY - boxPadding,
+        textWidth + boxPadding * 2,
+        fontHeightPixel + boxPadding * 2,
+        5,
+      );
+      this.drawingContext.fillStyle = "#000000A0";
+      this.drawingContext.fill();
+
+      this.drawingContext.fillStyle = "white";
+      this.drawingContext.fillText(text, centerX, centerY);
+    }
+  }
+
+  beginScene(drawingContext, r, g, b, a) {
+    if (a > 0) {
+      drawingContext.beginPath();
+      drawingContext.fillStyle =
+        "rgba(" + r + "," + g + "," + b + "," + a + ")";
+      drawingContext.rect(0, 0, this.screenWidth, this.screenHeight);
+      drawingContext.fill();
+    } else {
+      drawingContext.clearRect(0, 0, this.screenWidth, this.screenHeight);
+    }
+  }
+
+  endScene() {}
+}

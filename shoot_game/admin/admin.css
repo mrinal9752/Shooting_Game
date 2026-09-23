@@ -1,0 +1,106 @@
+:root {
+  color-scheme: dark;
+  font-family: Arial, sans-serif;
+  background: #080f1c;
+  color: #eff6ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at top, #173963, #080f1c 58%);
+}
+
+.dashboard {
+  width: min(100%, 760px);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #7eb8ff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(30px, 7vw, 48px);
+}
+
+.intro {
+  margin: 12px 0 18px;
+  color: #c5d6ee;
+  line-height: 1.5;
+}
+
+.status,
+.updated {
+  color: #9fc2ed;
+  font-size: 14px;
+}
+
+.status.error {
+  color: #ff9c9c;
+}
+
+.scoreboard {
+  overflow: hidden;
+  border: 1px solid #3d5a80;
+  border-radius: 14px;
+  background: rgba(11, 24, 42, 0.88);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 16px;
+  text-align: left;
+}
+
+th {
+  background: #1a3658;
+  color: #bcd9ff;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+tbody tr + tr {
+  border-top: 1px solid #294769;
+}
+
+td:nth-child(1),
+td:nth-child(3),
+td:nth-child(4) {
+  font-variant-numeric: tabular-nums;
+}
+
+td:nth-child(4) {
+  color: #85db9a;
+  font-weight: 700;
+}
+
+.empty {
+  color: #a6b9d0;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  th,
+  td {
+    padding: 12px 8px;
+  }
+}
