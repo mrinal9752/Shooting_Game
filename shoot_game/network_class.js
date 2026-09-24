@@ -7,7 +7,7 @@
 const wsUri = "wss://shooting-game-i5f4.onrender.com";
 
 class NetworkClass {
-class NetworkClass {
+
   constructor() {
     this.isConnected = false;
     this.reconnectCount = 0;
