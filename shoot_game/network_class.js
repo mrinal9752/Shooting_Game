@@ -5,7 +5,7 @@ const wsUri =
   window.GAME_SERVER_URL ||
   (location.protocol === "https:"
     ? "wss://" + location.host + "/ws"
-    : "ws://" + location.hostname + ":" + (window.GAME_SERVER_PORT || 8081));
+    : "ws://" + location.hostname + ":" + (window.GAME_SERVER_PORT || 8082));
 class NetworkClass {
   constructor() {
     this.isConnected = false;
