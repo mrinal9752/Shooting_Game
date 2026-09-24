@@ -1,11 +1,12 @@
 // Always connect to the server that is hosting this copy of the game.
 // - Local/LAN testing: http://HOST:8000 -> ws://HOST:8081
 // - Public deployment: HTTPS reverse proxy -> wss://YOUR-DOMAIN/ws
-const wsUri =
-  window.GAME_SERVER_URL ||
-  (location.protocol === "https:"
-    ? "wss://" + location.host + "/ws"
-    : "ws://" + location.hostname + ":" + (window.GAME_SERVER_PORT || 8082));
+"use strict";
+
+// Public game WebSocket server.
+const wsUri = "wss://shooting-game-i5f4.onrender.com";
+
+class NetworkClass {
 class NetworkClass {
   constructor() {
     this.isConnected = false;
