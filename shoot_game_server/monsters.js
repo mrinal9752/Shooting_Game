@@ -794,11 +794,40 @@ function start() {
 
   // Zombie movement/attack loop: 30 FPS.
 // Zombie movement/attack loop: reduced network rate.
-  const monsterNetworkHz =
-    Number(config.MONSTER_NETWORK_HZ) > 0
-      ? Number(config.MONSTER_NETWORK_HZ)
-      : 15;
-  
+function start() {
+  // Watch for the first real participant.
+  setInterval(function () {
+    if (
+      state.userCount > 0 &&
+      !firstInvasionStarted
+    ) {
+      firstInvasionStarted = true;
+
+      console.log(
+        "First participant detected: starting zombie invasion.",
+      );
+
+      startInvasion();
+    }
+  }, 500);
+
+  // ------------------------------------------------------------
+  // ZOMBIE SERVER SIMULATION
+  // ------------------------------------------------------------
+  // Keep zombie movement/AI at 30 FPS.
+  // This is the actual game simulation rate.
+  //
+  // Network snapshots are sent separately at 20 FPS.
+  // This reduces bandwidth without making zombie movement slow.
+  // ------------------------------------------------------------
+
+  const SIMULATION_HZ = 30;
+  const NETWORK_HZ = 20;
+
+  const NETWORK_INTERVAL = 1000 / NETWORK_HZ;
+
+  let lastNetworkSend = 0;
+
   setInterval(function () {
     const now = Date.now();
 
@@ -815,9 +844,12 @@ function start() {
       return;
     }
 
-    const positions = [];
     const targets = getLiveTargets();
-    
+
+    // ----------------------------------------------------------
+    // 1. UPDATE EVERY ZOMBIE
+    // ----------------------------------------------------------
+
     state.forEachPlayer(
       monsters,
       function (monster) {
@@ -826,8 +858,28 @@ function start() {
           now,
           targets,
         );
+      },
+    );
 
-    positions.push({
+    // ----------------------------------------------------------
+    // 2. SEND NETWORK SNAPSHOT ONLY 20 TIMES/SECOND
+    // ----------------------------------------------------------
+
+    if (
+      now - lastNetworkSend <
+      NETWORK_INTERVAL
+    ) {
+      return;
+    }
+
+    lastNetworkSend = now;
+
+    const positions = [];
+
+    state.forEachPlayer(
+      monsters,
+      function (monster) {
+        positions.push({
           id: monster.id,
           x: Math.round(monster.x),
           y: Math.round(monster.y),
@@ -844,7 +896,8 @@ function start() {
         positions,
       );
     }
-  }, 1000 / monsterNetworkHz);
+  }, 1000 / SIMULATION_HZ);
+}
 }
 
 module.exports = {
