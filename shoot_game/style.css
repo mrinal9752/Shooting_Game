@@ -153,26 +153,37 @@ body {
 .password-field input {
   width: 100%;
   box-sizing: border-box;
-  padding-right: 48px;
+  padding-right: 52px;
 }
 
 .password-toggle {
-  position: absolute;
+  position: absolute !important;
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
 
-  width: 36px;
-  height: 36px;
+  width: 32px !important;
+  height: 32px !important;
 
-  border: 0;
-  background: transparent;
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: none !important;
+  border-radius: 6px !important;
+
+  background: transparent !important;
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   cursor: pointer;
-  font-size: 18px;
-  padding: 0;
+  font-size: 17px;
+  line-height: 1;
 }
 
 .password-toggle:hover {
-  opacity: 0.75;
+  background: rgba(255, 255, 255, 0.08) !important;
+  opacity: 1;
 }
