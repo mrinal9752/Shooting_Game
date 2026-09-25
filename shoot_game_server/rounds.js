@@ -73,13 +73,9 @@ function endRound() {
     net.sendServerNotice("round_end", {});
   }
 
-  function resetRecord(player) {
-    player.kill = 0;
-    player.death = 0;
-    player.streak = 0;
-    net.sendAll("user_kill", { id: player.id, kill: 0 });
-    net.sendAll("user_death", { id: player.id, death: 0 });
-  }
+function resetRecord(player) {
+  player.streak = 0;
+}
   state.forEachPlayer(state.clients, resetRecord);
   state.forEachPlayer(state.aiPlayers, resetRecord);
 
