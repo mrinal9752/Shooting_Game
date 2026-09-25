@@ -27,9 +27,23 @@ class PlayerClass {
     this.spawnProtectedUntil = 0;
 
     this.ammo = [];
-    this.ammo["handgun"] = { currentAmmo: 12, maxAmmo: 12 };
-    this.ammo["rifle"] = { currentAmmo: 30, maxAmmo: 30 };
-    this.ammo["shotgun"] = { currentAmmo: 6, maxAmmo: 6 };
+    this.ammo["handgun"] = {
+      currentAmmo: 12,
+      maxAmmo: 12,
+      reserveAmmo: 12,
+    };
+    
+    this.ammo["rifle"] = {
+      currentAmmo: 30,
+      maxAmmo: 30,
+      reserveAmmo: 30,
+    };
+    
+    this.ammo["shotgun"] = {
+      currentAmmo: 6,
+      maxAmmo: 6,
+      reserveAmmo: 6,
+    };
   }
 
   resetAmmo() {
@@ -190,7 +204,7 @@ class PlayerClass {
       this.meleeAttack();
     } else if (
       this.status === "idle" &&
-      (this.otherPlayer || this.ammo[this.weapon].currentAmmo > 0)
+      this.ammo[this.weapon].currentAmmo > 0
     ) {
       this.status = "shoot";
       this.currentStatusFrame = 0;
