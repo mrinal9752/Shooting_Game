@@ -777,6 +777,12 @@ function start() {
   }, 500);
 
   // Zombie movement/attack loop: 30 FPS.
+// Zombie movement/attack loop: reduced network rate.
+  const monsterNetworkHz =
+    Number(config.MONSTER_NETWORK_HZ) > 0
+      ? Number(config.MONSTER_NETWORK_HZ)
+      : 15;
+  
   setInterval(function () {
     const now = Date.now();
 
@@ -818,7 +824,7 @@ function start() {
         positions,
       );
     }
-  }, 1000 / 30);
+  }, 1000 / monsterNetworkHz);
 }
 
 module.exports = {
