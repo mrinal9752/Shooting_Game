@@ -244,45 +244,61 @@ function killMonster(
 
 // Find the nearest living HUMAN participant.
 // AI players have been removed.
-function findNearestTarget(monster) {
-  const centerX =
-    monster.x +
-    monster.width / 2;
+function getLiveTargets() {
+  const targets = [];
 
-  const centerY =
-    monster.y +
-    monster.height / 2;
+  state.forEachPlayer(
+    state.clients,
+    function (player) {
+      if (player && player.hp > 0) {
+        targets.push(player);
+      }
+    },
+  );
 
-  let best = undefined;
+  // AI is disabled for your game, but keeping this here
+  // does not hurt compatibility.
+  state.forEachPlayer(
+    state.aiPlayers,
+    function (player) {
+      if (player && player.hp > 0) {
+        targets.push(player);
+      }
+    },
+  );
 
-  let bestDistance =
-    config.MONSTER_SIGHT_RANGE;
+  return targets;
+}
 
-  function consider(player) {
-    if (player.hp <= 0) {
-      return;
-    }
+function findBalancedTarget(monster, targets) {
+  if (!targets || targets.length === 0) {
+    return undefined;
+  }
 
-    const distance = getDistance(
-      centerX,
-      centerY,
-      player.x + player.width / 2,
-      player.y + player.height / 2,
-    );
-
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      best = player;
+  // Keep following the current target while they are alive.
+  if (monster.targetId) {
+    for (let i = 0; i < targets.length; i++) {
+      if (targets[i].id === monster.targetId) {
+        return targets[i];
+      }
     }
   }
 
-  // HUMAN PARTICIPANTS ONLY.
-  state.forEachPlayer(
-    state.clients,
-    consider,
-  );
+  // Spread monsters across players.
+  // Monster number is used to choose a stable player index.
+  const match = String(monster.id).match(/(\d+)$/);
+  const monsterNumber = match
+    ? parseInt(match[1], 10)
+    : 0;
 
-  return best;
+  const targetIndex =
+    monsterNumber % targets.length;
+
+  const target = targets[targetIndex];
+
+  monster.targetId = target.id;
+
+  return target;
 }
 
 // ============================================================================
@@ -448,9 +464,13 @@ function separate(monster) {
 function processMonster(
   monster,
   now,
+  targets,
 ) {
   const target =
-    findNearestTarget(monster);
+    findBalancedTarget(
+      monster,
+      targets,
+    );
 
   if (!target) {
     return;
@@ -796,13 +816,18 @@ function start() {
     }
 
     const positions = [];
-
+    const targets = getLiveTargets();
+    
     state.forEachPlayer(
       monsters,
       function (monster) {
-        processMonster(monster, now);
+        processMonster(
+          monster,
+          now,
+          targets,
+        );
 
-        positions.push({
+    positions.push({{
           id: monster.id,
           x: Math.round(monster.x),
           y: Math.round(monster.y),
