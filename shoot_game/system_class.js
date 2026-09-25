@@ -27,6 +27,31 @@ class SystemClass {
     this.graphicsClass = new GraphicsClass(canvas, uiCanvas, this.objectClass);
     this.inputClass = new InputClass(window, canvas);
     this.soundClass = new SoundClass();
+        const connection =
+      navigator.connection ||
+      navigator.mozConnection ||
+      navigator.webkitConnection;
+    
+    const slowConnection =
+      connection &&
+      (
+        connection.saveData ||
+        connection.effectiveType === "slow-2g" ||
+        connection.effectiveType === "2g" ||
+        connection.effectiveType === "3g"
+      );
+    
+    const lowEndDevice =
+      (navigator.hardwareConcurrency &&
+        navigator.hardwareConcurrency <= 4) ||
+      (navigator.deviceMemory &&
+        navigator.deviceMemory <= 4);
+    
+    this.lowPowerMode = !!(slowConnection || lowEndDevice);
+    this.lastVisualFrameAt = 0;
+    this.visualFrameInterval = this.lowPowerMode
+      ? 1000 / 30
+      : 1000 / 60;
     this.networkClass = new NetworkClass();
     this.currentId = undefined;
     this.pointerLockMode = false;
@@ -1031,12 +1056,25 @@ class SystemClass {
       function onVsync(sender) {
         sender.inputFrame();
         sender.playersFrame();
-
-        sender.soundClass.frame(sender.players, sender.graphicsClass);
-        sender.graphicsClass.frame(sender.players);
-
-        if (debugClass) {
-          debugClass.frame();
+        
+        const now = performance.now();
+        
+        if (
+          now - sender.lastVisualFrameAt >=
+          sender.visualFrameInterval
+        ) {
+          sender.lastVisualFrameAt = now;
+        
+          sender.soundClass.frame(
+            sender.players,
+            sender.graphicsClass,
+          );
+        
+          sender.graphicsClass.frame(sender.players);
+        
+          if (debugClass) {
+            debugClass.frame();
+          }
         }
 
         if (sender.isRunning) {
