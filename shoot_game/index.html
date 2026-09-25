@@ -136,15 +136,28 @@
         required
       />
 
-      <label for="accessCode">Access Code</label>
-      <input
-        id="accessCode"
-        type="password"
-        maxlength="128"
-        autocomplete="off"
-        placeholder="Enter your access code"
-        required
-      />
+<label for="accessCode">Access Code</label>
+
+<div class="password-field">
+  <input
+    id="accessCode"
+    type="password"
+    maxlength="128"
+    autocomplete="off"
+    placeholder="Enter your access code"
+    required
+  />
+
+  <button
+    type="button"
+    id="toggleAccessCode"
+    class="password-toggle"
+    aria-label="Show access code"
+    aria-pressed="false"
+  >
+    👁
+  </button>
+</div>
 
       <label for="playerName">Your name</label>
       <input
