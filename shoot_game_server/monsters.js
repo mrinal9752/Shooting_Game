@@ -294,56 +294,61 @@ function findBalancedTarget(monster, targets) {
 // MOVEMENT
 // ============================================================================
 
-function canMonsterMoveTo(monster, x, y) {
-  const padding = 2;
 
-  return (
-    isWalkablePosition(
-      x + padding,
-      y + padding,
-    ) &&
-    isWalkablePosition(
-      x + monster.width - padding,
-      y + padding,
-    ) &&
-    isWalkablePosition(
-      x + padding,
-      y + monster.height - padding,
-    ) &&
-    isWalkablePosition(
-      x + monster.width - padding,
-      y + monster.height - padding,
-    )
-  );
-}
 
 function stepMonster(monster) {
   const speed =
     Number(config.MONSTER_MOVE_SPEED) || 5;
 
-  const dx =
-    monster.destinationX -
-    monster.x;
+  if (
+    monster.x !== monster.destinationX ||
+    monster.y !== monster.destinationY
+  ) {
+    const dx =
+      monster.destinationX - monster.x;
 
-  const dy =
-    monster.destinationY -
-    monster.y;
+    const dy =
+      monster.destinationY - monster.y;
 
-  const distance =
-    Math.sqrt(
-      dx * dx +
-      dy * dy,
-    );
+    const distance =
+      Math.sqrt(
+        dx * dx +
+        dy * dy
+      );
 
-  // No movement required.
-  if (distance <= 0.001) {
+    if (speed >= distance) {
+      monster.x =
+        monster.destinationX;
+
+      monster.y =
+        monster.destinationY;
+    } else {
+      const radian =
+        Math.atan2(dy, dx);
+
+      monster.x +=
+        Math.cos(radian) * speed;
+
+      monster.y +=
+        Math.sin(radian) * speed;
+
+      monster.direction =
+        (radian / Math.PI) * 180;
+    }
+
+    return;
+  }
+
+  // Reached current waypoint
+  if (
+    monster.isPathMovingActive
+  ) {
+    monster.currentMovingPathIndex++;
+
     if (
-      monster.isPathMovingActive &&
-      monster.currentMovingPathIndex + 1 <
-        monster.movingPath.length
+      monster.currentMovingPathIndex <
+      monster.movingPath.length
     ) {
-      monster.currentMovingPathIndex++;
-
       monster.destinationX =
         monster.movingPath[
           monster.currentMovingPathIndex
@@ -353,57 +358,11 @@ function stepMonster(monster) {
         monster.movingPath[
           monster.currentMovingPathIndex
         ].y;
-
-      return;
+    } else {
+      monster.isPathMovingActive =
+        false;
     }
-
-    monster.isPathMovingActive = false;
-    return;
   }
-
-  // Reached current waypoint.
-  if (distance <= speed) {
-    monster.x =
-      monster.destinationX;
-
-    monster.y =
-      monster.destinationY;
-
-    if (
-      monster.isPathMovingActive &&
-      monster.currentMovingPathIndex + 1 <
-        monster.movingPath.length
-    ) {
-      monster.currentMovingPathIndex++;
-
-      monster.destinationX =
-        monster.movingPath[
-          monster.currentMovingPathIndex
-        ].x;
-
-      monster.destinationY =
-        monster.movingPath[
-          monster.currentMovingPathIndex
-        ].y;
-
-      return;
-    }
-
-    monster.isPathMovingActive = false;
-    return;
-  }
-
-  // Move smoothly toward the waypoint.
-  const ratio =
-    speed / distance;
-
-  monster.x += dx * ratio;
-  monster.y += dy * ratio;
-
-  monster.direction =
-    (Math.atan2(dy, dx) /
-      Math.PI) *
-    180;
 }
 
 // ============================================================================
