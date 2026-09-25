@@ -6,6 +6,9 @@
 
 const ADMIN_SESSION_KEY = "flux_admin_session_v1";
 
+const liveParticipantCount =
+  document.getElementById("liveParticipantCount");
+
 const loginCard =
   document.getElementById("loginCard");
 
@@ -234,13 +237,13 @@ function connect() {
         break;
 
 
-      case "admin_stats":
-
-        renderLeaderboard(
-          msg.data || [],
-        );
-
-        break;
+    case "admin_stats":
+      renderLeaderboard(msg.data.players || []);
+    
+      liveParticipantCount.textContent =
+        msg.data.liveParticipants || 0;
+    
+      break;
     }
   };
 
