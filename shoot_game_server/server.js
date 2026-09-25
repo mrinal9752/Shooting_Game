@@ -334,12 +334,25 @@ function normalizeParticipantId(value) {
     return undefined;
   }
 
-  // Keep participant IDs deliberately simple.
   if (!/^[A-Z0-9_-]+$/.test(id)) {
     return undefined;
   }
 
   return id;
+}
+
+function normalizeAccessCode(value) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const code = value.trim();
+
+  if (!code || code.length > 128) {
+    return undefined;
+  }
+
+  return code;
 }
 
 function normalizeSessionToken(value) {
