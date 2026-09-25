@@ -744,9 +744,6 @@ function getMonstersSnapshot() {
 // ============================================================================
 
 function resetForNewMap() {
-  invasionActive = false;
-  spawnedAllWaves = false;
-
   clearAllMonsters();
 }
 
@@ -756,7 +753,6 @@ function resetForNewMap() {
 
 function start() {
   // Keep the normal future invasion schedule.
-  scheduleNextInvasion();
 
   // Watch for the first real participant.
   // This fixes the case where the scheduled invasion happened
@@ -805,7 +801,6 @@ function start() {
       monsters,
       function (monster) {
         processMonster(monster, now);
-        separate(monster);
 
         positions.push({
           id: monster.id,
