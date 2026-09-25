@@ -310,30 +310,29 @@ module.exports = {
           Math.floor(Math.random() * map.walkablePositions.length) %
             map.walkablePositions.length
         ];
-      const path = pathFinding.Util.compressPath(
-        findPath(
-          map,
-          Math.floor(npc.x / map.mapData.tile_width),
-          Math.floor(npc.y / map.mapData.tile_height),
-          target.x,
-          target.y,
-        ),
-      );
-      applyPath(npc, map, path);
+    const path = findPath(
+      map,
+      Math.floor(npc.x / map.mapData.tile_width),
+      Math.floor(npc.y / map.mapData.tile_height),
+      Math.floor(target.x / map.mapData.tile_width),
+      Math.floor(target.y / map.mapData.tile_height),
+    );
+    
+    applyPath(npc, map, path);
     }
   },
   setDestinationPath: (npc, target) => {
     if (npc && target) {
       const map = getActiveMap();
-      const path = pathFinding.Util.compressPath(
-        findPath(
-          map,
-          Math.floor(npc.x / map.mapData.tile_width),
-          Math.floor(npc.y / map.mapData.tile_height),
-          Math.floor(target.x / map.mapData.tile_width),
-          Math.floor(target.y / map.mapData.tile_height),
-        ),
+  
+      const path = findPath(
+        map,
+        Math.floor(npc.x / map.mapData.tile_width),
+        Math.floor(npc.y / map.mapData.tile_height),
+        Math.floor(target.x / map.mapData.tile_width),
+        Math.floor(target.y / map.mapData.tile_height),
       );
+  
       applyPath(npc, map, path);
     }
   },
