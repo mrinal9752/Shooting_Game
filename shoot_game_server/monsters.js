@@ -256,17 +256,6 @@ function getLiveTargets() {
     },
   );
 
-  // AI is disabled for your game, but keeping this here
-  // does not hurt compatibility.
-  state.forEachPlayer(
-    state.aiPlayers,
-    function (player) {
-      if (player && player.hp > 0) {
-        targets.push(player);
-      }
-    },
-  );
-
   return targets;
 }
 
@@ -771,17 +760,17 @@ function resetForNewMap() {
 // START
 // ============================================================================
 
-function start() {
-  // Keep the normal future invasion schedule.
+// ============================================================================
+// START
+// ============================================================================
 
+function start() {
+  // ------------------------------------------------------------
   // Watch for the first real participant.
-  // This fixes the case where the scheduled invasion happened
-  // before anyone joined.
+  // Start the first zombie invasion when someone joins.
+  // ------------------------------------------------------------
   setInterval(function () {
-    if (
-      state.userCount > 0 &&
-      !firstInvasionStarted
-    ) {
+    if (state.userCount > 0 && !firstInvasionStarted) {
       firstInvasionStarted = true;
 
       console.log(
@@ -792,38 +781,23 @@ function start() {
     }
   }, 500);
 
-  // Zombie movement/attack loop: 30 FPS.
-// Zombie movement/attack loop: reduced network rate.
-function start() {
-  // Watch for the first real participant.
-  setInterval(function () {
-    if (
-      state.userCount > 0 &&
-      !firstInvasionStarted
-    ) {
-      firstInvasionStarted = true;
-
-      console.log(
-        "First participant detected: starting zombie invasion.",
-      );
-
-      startInvasion();
-    }
-  }, 500);
+  // ------------------------------------------------------------
+  // Keep future invasions scheduled.
+  // ------------------------------------------------------------
+  scheduleNextInvasion();
 
   // ------------------------------------------------------------
   // ZOMBIE SERVER SIMULATION
   // ------------------------------------------------------------
-  // Keep zombie movement/AI at 30 FPS.
-  // This is the actual game simulation rate.
+  // Zombie movement + attacks = 30 FPS
+  // Network position snapshots = 20 FPS
   //
-  // Network snapshots are sent separately at 20 FPS.
-  // This reduces bandwidth without making zombie movement slow.
+  // This keeps zombie movement smooth while reducing
+  // unnecessary network traffic.
   // ------------------------------------------------------------
 
   const SIMULATION_HZ = 30;
   const NETWORK_HZ = 20;
-
   const NETWORK_INTERVAL = 1000 / NETWORK_HZ;
 
   let lastNetworkSend = 0;
@@ -831,19 +805,17 @@ function start() {
   setInterval(function () {
     const now = Date.now();
 
-    if (
-      invasionActive &&
-      now >= invasionEndTime
-    ) {
+    // End invasion when its maximum duration is reached.
+    if (invasionActive && now >= invasionEndTime) {
       endInvasion(false);
     }
 
-    if (
-      state.countPlayers(monsters) === 0
-    ) {
+    // Nothing to simulate if there are no zombies.
+    if (state.countPlayers(monsters) === 0) {
       return;
     }
 
+    // Only real human participants are targets.
     const targets = getLiveTargets();
 
     // ----------------------------------------------------------
@@ -862,13 +834,10 @@ function start() {
     );
 
     // ----------------------------------------------------------
-    // 2. SEND NETWORK SNAPSHOT ONLY 20 TIMES/SECOND
+    // 2. SEND NETWORK SNAPSHOT AT 20 FPS
     // ----------------------------------------------------------
 
-    if (
-      now - lastNetworkSend <
-      NETWORK_INTERVAL
-    ) {
+    if (now - lastNetworkSend < NETWORK_INTERVAL) {
       return;
     }
 
@@ -883,9 +852,7 @@ function start() {
           id: monster.id,
           x: Math.round(monster.x),
           y: Math.round(monster.y),
-          direction: Math.round(
-            monster.direction,
-          ),
+          direction: Math.round(monster.direction),
         });
       },
     );
@@ -897,7 +864,6 @@ function start() {
       );
     }
   }, 1000 / SIMULATION_HZ);
-}
 }
 
 module.exports = {
