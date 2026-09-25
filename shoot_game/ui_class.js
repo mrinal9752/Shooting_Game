@@ -212,7 +212,7 @@ class UserHUD {
           const ammoInfo = player.getCurrentAmmoInfo();
           if (ammoInfo) {
             drawingContext.fillText(
-              ammoInfo.currentAmmo + " / " + ammoInfo.maxAmmo,
+              ammoInfo.currentAmmo + " / " + ammoInfo.reserveAmmo,
               this.screenWidth - 10,
               this.screenHeight - image.image.height,
             );
