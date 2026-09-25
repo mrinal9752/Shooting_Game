@@ -827,7 +827,7 @@ function start() {
           targets,
         );
 
-    positions.push({{
+    positions.push({
           id: monster.id,
           x: Math.round(monster.x),
           y: Math.round(monster.y),
