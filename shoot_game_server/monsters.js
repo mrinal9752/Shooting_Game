@@ -294,56 +294,51 @@ function findBalancedTarget(monster, targets) {
 // MOVEMENT
 // ============================================================================
 
+function canMonsterMoveTo(monster, x, y) {
+  const padding = 2;
+
+  return (
+    isWalkablePosition(
+      x + padding,
+      y + padding,
+    ) &&
+    isWalkablePosition(
+      x + monster.width - padding,
+      y + padding,
+    ) &&
+    isWalkablePosition(
+      x + padding,
+      y + monster.height - padding,
+    ) &&
+    isWalkablePosition(
+      x + monster.width - padding,
+      y + monster.height - padding,
+    )
+  );
+}
+
 function stepMonster(monster) {
-  if (
-    monster.x !== monster.destinationX ||
-    monster.y !== monster.destinationY
-  ) {
-    const distance = getDistance(
-      monster.x,
-      monster.y,
-      monster.destinationX,
-      monster.destinationY,
-    );
+  const speed = config.MONSTER_MOVE_SPEED;
+
+  const dx = monster.destinationX - monster.x;
+  const dy = monster.destinationY - monster.y;
+
+  const distance = Math.sqrt(
+    dx * dx + dy * dy,
+  );
+
+  // Reached current waypoint
+  if (distance <= speed + 1) {
+    monster.x = monster.destinationX;
+    monster.y = monster.destinationY;
 
     if (
-      config.MONSTER_MOVE_SPEED >=
-      distance
+      monster.isPathMovingActive &&
+      monster.currentMovingPathIndex + 1 <
+        monster.movingPath.length
     ) {
-      monster.x =
-        monster.destinationX;
+      monster.currentMovingPathIndex++;
 
-      monster.y =
-        monster.destinationY;
-    } else {
-      const radian = Math.atan2(
-        monster.destinationY -
-          monster.y,
-        monster.destinationX -
-          monster.x,
-      );
-
-      monster.x +=
-        Math.cos(radian) *
-        config.MONSTER_MOVE_SPEED;
-
-      monster.y +=
-        Math.sin(radian) *
-        config.MONSTER_MOVE_SPEED;
-
-      monster.direction =
-        (radian / Math.PI) *
-        180;
-    }
-  } else if (
-    monster.isPathMovingActive
-  ) {
-    monster.currentMovingPathIndex++;
-
-    if (
-      monster.currentMovingPathIndex <
-      monster.movingPath.length
-    ) {
       monster.destinationX =
         monster.movingPath[
           monster.currentMovingPathIndex
@@ -353,11 +348,83 @@ function stepMonster(monster) {
         monster.movingPath[
           monster.currentMovingPathIndex
         ].y;
-    } else {
-      monster.isPathMovingActive =
-        false;
+
+      return;
     }
+
+    monster.isPathMovingActive = false;
+    return;
   }
+
+  const nx =
+    monster.x +
+    (dx / distance) * speed;
+
+  const ny =
+    monster.y +
+    (dy / distance) * speed;
+
+  // Try normal movement
+  if (
+    canMonsterMoveTo(
+      monster,
+      nx,
+      ny,
+    )
+  ) {
+    monster.x = nx;
+    monster.y = ny;
+
+    monster.direction =
+      (Math.atan2(dy, dx) /
+        Math.PI) *
+      180;
+
+    return;
+  }
+
+  // Try sliding horizontally
+  if (
+    canMonsterMoveTo(
+      monster,
+      nx,
+      monster.y,
+    )
+  ) {
+    monster.x = nx;
+
+    monster.direction =
+      (Math.atan2(dy, dx) /
+        Math.PI) *
+      180;
+
+    return;
+  }
+
+  // Try sliding vertically
+  if (
+    canMonsterMoveTo(
+      monster,
+      monster.x,
+      ny,
+    )
+  ) {
+    monster.y = ny;
+
+    monster.direction =
+      (Math.atan2(dy, dx) /
+        Math.PI) *
+      180;
+
+    return;
+  }
+
+  // Completely blocked.
+  // Force a fresh A* path on the next update.
+  monster.isPathMovingActive = false;
+  monster.movingPath = [];
+  monster.currentMovingPathIndex = 0;
+  monster.lastRepathTime = 0;
 }
 
 // ============================================================================
