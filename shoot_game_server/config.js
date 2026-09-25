@@ -6,7 +6,7 @@ PORT: Number(process.env.PORT) || 8082,
 PRIVATE_SERVER: {
   ENABLED: true,
   HOST: "0.0.0.0",
-  MAX_PLAYERS: 20,
+  MAX_PLAYERS: 50,
   PARTICIPANTS: [
     {
       id: "P001",
@@ -68,6 +68,147 @@ PRIVATE_SERVER: {
       id: "P015",
       code: "FLUX015",
     },
+        {
+      id: "P016",
+      code: "FLUX016",
+    },
+    {
+      id: "P017",
+      code: "FLUX017",
+    },
+    {
+      id: "P018",
+      code: "FLUX018",
+    },
+    {
+      id: "P019",
+      code: "FLUX019",
+    },
+    {
+      id: "P020",
+      code: "FLUX020",
+    },
+    {
+      id: "P021",
+      code: "FLUX021",
+    },
+    {
+      id: "P022",
+      code: "FLUX022",
+    },
+    {
+      id: "P023",
+      code: "FLUX023",
+    },
+    {
+      id: "P024",
+      code: "FLUX024",
+    },
+    {
+      id: "P025",
+      code: "FLUX025",
+    },
+    {
+      id: "P026",
+      code: "FLUX026",
+    },
+    {
+      id: "P027",
+      code: "FLUX027",
+    },
+    {
+      id: "P028",
+      code: "FLUX028",
+    },
+    {
+      id: "P029",
+      code: "FLUX029",
+    },
+    {
+      id: "P030",
+      code: "FLUX030",
+    },
+    {
+      id: "P031",
+      code: "FLUX031",
+    },
+    {
+      id: "P032",
+      code: "FLUX032",
+    },
+    {
+      id: "P033",
+      code: "FLUX033",
+    },
+    {
+      id: "P034",
+      code: "FLUX034",
+    },
+    {
+      id: "P035",
+      code: "FLUX035",
+    },
+    {
+      id: "P036",
+      code: "FLUX036",
+    },
+    {
+      id: "P037",
+      code: "FLUX037",
+    },
+    {
+      id: "P038",
+      code: "FLUX038",
+    },
+    {
+      id: "P039",
+      code: "FLUX039",
+    },
+    {
+      id: "P040",
+      code: "FLUX040",
+    },
+    {
+      id: "P041",
+      code: "FLUX041",
+    },
+    {
+      id: "P042",
+      code: "FLUX042",
+    },
+    {
+      id: "P043",
+      code: "FLUX043",
+    },
+    {
+      id: "P044",
+      code: "FLUX044",
+    },
+    {
+      id: "P045",
+      code: "FLUX045",
+    },
+    {
+      id: "P046",
+      code: "FLUX046",
+    },
+    {
+      id: "P047",
+      code: "FLUX047",
+    },
+    {
+      id: "P048",
+      code: "FLUX048",
+    },
+    {
+      id: "P049",
+      code: "FLUX049",
+    },
+    {
+      id: "P050",
+      code: "FLUX050",
+    },
+    
 
   ],
 
