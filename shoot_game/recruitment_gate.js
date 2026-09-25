@@ -46,6 +46,8 @@ class JoinGateClass {
         self.join();
       },
     );
+    // Restore participant login after page refresh.
+    this.restoreSession();
   }
 
   join() {
@@ -82,12 +84,23 @@ class JoinGateClass {
       );
       return;
     }
-
+    
+    // Save login for this browser tab.
+    // This survives refresh but is cleared when the tab/browser is closed.
+    sessionStorage.setItem(
+      "fluxParticipant",
+      JSON.stringify({
+        participantId: participantId,
+        accessCode: accessCode,
+        playerName: name,
+      }),
+    );
+    
     this.setStatus(
       "Checking participant access…",
       "",
     );
-
+    
     this.networkClass.joinGame(
       name,
       participantId,
@@ -138,4 +151,68 @@ class JoinGateClass {
       ? "join-status " + type
       : "join-status";
   }
+  restoreSession() {
+  const savedSession =
+    sessionStorage.getItem("fluxParticipant");
+
+  if (!savedSession) {
+    return;
+  }
+
+  try {
+    const participant =
+      JSON.parse(savedSession);
+
+    if (
+      !participant.participantId ||
+      !participant.accessCode ||
+      !participant.playerName
+    ) {
+      sessionStorage.removeItem(
+        "fluxParticipant",
+      );
+      return;
+    }
+
+    // Put saved values back into the login form.
+    if (this.participantIdInput) {
+      this.participantIdInput.value =
+        participant.participantId;
+    }
+
+    if (this.accessCodeInput) {
+      this.accessCodeInput.value =
+        participant.accessCode;
+    }
+
+    this.nameInput.value =
+      participant.playerName;
+
+    this.setStatus(
+      "Restoring your participant session…",
+      "",
+    );
+
+    // Wait briefly so the WebSocket/network initialization
+    // has time to finish before attempting to rejoin.
+    var self = this;
+
+    setTimeout(function () {
+      self.networkClass.joinGame(
+        participant.playerName,
+        participant.participantId,
+        participant.accessCode,
+      );
+    }, 300);
+  } catch (error) {
+    console.error(
+      "Failed to restore participant session:",
+      error,
+    );
+
+    sessionStorage.removeItem(
+      "fluxParticipant",
+    );
+  }
+}
 }
