@@ -9,13 +9,18 @@ const state = require("./state");
 const net = require("./net");
 const mapHelper = require("./map-helper");
 
-let roundEndTime = Date.now() + config.ROUND_DURATION;
+// IMPORTANT:
+// Timer must NOT start when the server starts.
+// It starts only when rounds.start() is called by the first participant.
+let roundEndTime = null;
 let roundInfoTickCounter = 0;
 let mapRotationIndex = 0;
+let roundStarted = false;
 
 // 라운드 종료(맵 교체 후)에 호출할 훅. ai/items 와의 순환 의존을 피하기 위해
 // server.js 가 등록한다 (AI 리스폰, 아이템 재배치 등)
 const roundEndCallbacks = [];
+
 function onRoundEnd(callback) {
   roundEndCallbacks.push(callback);
 }
@@ -32,6 +37,7 @@ function announceKill(killer, victim, victimStreak) {
       streak: killer.streak,
     });
   }
+
   // 3연속 킬 이상이던 플레이어가 처치되면 저지 공지
   if (victimStreak >= 3) {
     net.sendServerNotice("streak_stopped", {
@@ -43,6 +49,11 @@ function announceKill(killer, victim, victimStreak) {
 }
 
 function getRemainMs() {
+  // Game has not started yet
+  if (!roundStarted || roundEndTime === null) {
+    return 0;
+  }
+
   return Math.max(0, roundEndTime - Date.now());
 }
 
@@ -55,12 +66,16 @@ function broadcastRoundInfo() {
 
 function endRound() {
   let winner = undefined;
+
   function considerWinner(player) {
     if (!winner || player.kill > winner.kill) {
       winner = player;
     }
   }
+
   state.forEachPlayer(state.clients, considerWinner);
+
+  // AI disabled, but left here for compatibility with the existing system.
   state.forEachPlayer(state.aiPlayers, considerWinner);
 
   if (winner && winner.kill > 0) {
@@ -73,38 +88,72 @@ function endRound() {
     net.sendServerNotice("round_end", {});
   }
 
-function resetRecord(player) {
-  player.streak = 0;
-}
+  function resetRecord(player) {
+    player.streak = 0;
+  }
+
   state.forEachPlayer(state.clients, resetRecord);
   state.forEachPlayer(state.aiPlayers, resetRecord);
 
-  // 다음 맵으로 교체 후 훅 실행 (AI 리스폰, 아이템 재배치).
-  // 클라이언트는 직후의 round_info 브로드캐스트로 새 맵을 알고 스스로 리스폰한다.
-  mapRotationIndex = (mapRotationIndex + 1) % config.MAP_ROTATION.length;
+  // 다음 맵으로 교체
+  mapRotationIndex =
+    (mapRotationIndex + 1) % config.MAP_ROTATION.length;
+
   const nextMapName = config.MAP_ROTATION[mapRotationIndex];
+
   mapHelper.setActiveMap(nextMapName);
-  net.sendServerNotice("map_changed", { name: nextMapName });
+
+  net.sendServerNotice("map_changed", {
+    name: nextMapName,
+  });
+
   for (let i = 0; i < roundEndCallbacks.length; i++) {
     roundEndCallbacks[i]();
   }
 
+  // Start the next round immediately
+  roundEndTime = Date.now() + config.ROUND_DURATION;
+  roundInfoTickCounter = 0;
+
   net.sendServerNotice("round_start", {
     minutes: config.ROUND_DURATION / 60000,
   });
+
+  broadcastRoundInfo();
 }
 
-// 라운드 타이머 시작. 10초마다 남은 시간을 동기화한다
-// (사이사이는 클라이언트가 로컬로 카운트다운)
+// 라운드 타이머 시작.
+// IMPORTANT: start() is called only when the first participant joins.
 function start() {
+  // Prevent duplicate timers / duplicate starts
+  if (roundStarted) {
+    return;
+  }
+
+  roundStarted = true;
+
+  // EXACT moment the first participant starts the game
+  roundEndTime = Date.now() + config.ROUND_DURATION;
+  roundInfoTickCounter = 0;
+
+  console.log(
+    "ROUND TIMER STARTED:",
+    config.ROUND_DURATION / 60000,
+    "minutes"
+  );
+
+  // Keep server time synchronized
   setInterval(function () {
-    if (Date.now() >= roundEndTime) {
-      endRound();
-      roundEndTime = Date.now() + config.ROUND_DURATION;
-      roundInfoTickCounter = 0;
-      broadcastRoundInfo();
+    if (!roundStarted || roundEndTime === null) {
       return;
     }
+
+    if (Date.now() >= roundEndTime) {
+      endRound();
+      return;
+    }
+
+    // Every 10 seconds send remaining time to clients
     if (++roundInfoTickCounter >= 10) {
       roundInfoTickCounter = 0;
       broadcastRoundInfo();
