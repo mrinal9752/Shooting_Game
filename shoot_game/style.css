@@ -144,3 +144,35 @@ body {
 .join-status.error {
   color: #ff9a9a;
 }
+
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 36px;
+  height: 36px;
+
+  border: 0;
+  background: transparent;
+
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+}
+
+.password-toggle:hover {
+  opacity: 0.75;
+}
