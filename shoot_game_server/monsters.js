@@ -318,19 +318,56 @@ function canMonsterMoveTo(monster, x, y) {
 }
 
 function stepMonster(monster) {
-  const speed = config.MONSTER_MOVE_SPEED;
+  const speed =
+    Number(config.MONSTER_MOVE_SPEED) || 5;
 
-  const dx = monster.destinationX - monster.x;
-  const dy = monster.destinationY - monster.y;
+  const dx =
+    monster.destinationX -
+    monster.x;
 
-  const distance = Math.sqrt(
-    dx * dx + dy * dy,
-  );
+  const dy =
+    monster.destinationY -
+    monster.y;
 
-  // Reached current waypoint
-  if (distance <= speed + 1) {
-    monster.x = monster.destinationX;
-    monster.y = monster.destinationY;
+  const distance =
+    Math.sqrt(
+      dx * dx +
+      dy * dy,
+    );
+
+  // No movement required.
+  if (distance <= 0.001) {
+    if (
+      monster.isPathMovingActive &&
+      monster.currentMovingPathIndex + 1 <
+        monster.movingPath.length
+    ) {
+      monster.currentMovingPathIndex++;
+
+      monster.destinationX =
+        monster.movingPath[
+          monster.currentMovingPathIndex
+        ].x;
+
+      monster.destinationY =
+        monster.movingPath[
+          monster.currentMovingPathIndex
+        ].y;
+
+      return;
+    }
+
+    monster.isPathMovingActive = false;
+    return;
+  }
+
+  // Reached current waypoint.
+  if (distance <= speed) {
+    monster.x =
+      monster.destinationX;
+
+    monster.y =
+      monster.destinationY;
 
     if (
       monster.isPathMovingActive &&
@@ -356,75 +393,17 @@ function stepMonster(monster) {
     return;
   }
 
-  const nx =
-    monster.x +
-    (dx / distance) * speed;
+  // Move smoothly toward the waypoint.
+  const ratio =
+    speed / distance;
 
-  const ny =
-    monster.y +
-    (dy / distance) * speed;
+  monster.x += dx * ratio;
+  monster.y += dy * ratio;
 
-  // Try normal movement
-  if (
-    canMonsterMoveTo(
-      monster,
-      nx,
-      ny,
-    )
-  ) {
-    monster.x = nx;
-    monster.y = ny;
-
-    monster.direction =
-      (Math.atan2(dy, dx) /
-        Math.PI) *
-      180;
-
-    return;
-  }
-
-  // Try sliding horizontally
-  if (
-    canMonsterMoveTo(
-      monster,
-      nx,
-      monster.y,
-    )
-  ) {
-    monster.x = nx;
-
-    monster.direction =
-      (Math.atan2(dy, dx) /
-        Math.PI) *
-      180;
-
-    return;
-  }
-
-  // Try sliding vertically
-  if (
-    canMonsterMoveTo(
-      monster,
-      monster.x,
-      ny,
-    )
-  ) {
-    monster.y = ny;
-
-    monster.direction =
-      (Math.atan2(dy, dx) /
-        Math.PI) *
-      180;
-
-    return;
-  }
-
-  // Completely blocked.
-  // Force a fresh A* path on the next update.
-  monster.isPathMovingActive = false;
-  monster.movingPath = [];
-  monster.currentMovingPathIndex = 0;
-  monster.lastRepathTime = 0;
+  monster.direction =
+    (Math.atan2(dy, dx) /
+      Math.PI) *
+    180;
 }
 
 // ============================================================================
