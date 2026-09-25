@@ -351,10 +351,11 @@ class PlayerClass {
       this.weapon === "rifle" ||
       this.weapon === "shotgun"
     ) {
-      if (
-        this.status === "idle" &&
-        this.ammo[this.weapon].currentAmmo < this.ammo[this.weapon].maxAmmo
-      ) {
+    if (
+      this.status === "idle" &&
+      this.ammo[this.weapon].currentAmmo < this.ammo[this.weapon].maxAmmo &&
+      this.ammo[this.weapon].reserveAmmo > 0
+    ) {
         var totalFrames = 0;
         var interval = 1000 / 20;
         var backDelay = 0;
@@ -381,6 +382,8 @@ class PlayerClass {
           this.currentStatusFrame = 0;
 
           var self = this;
+          var reloadWeapon = this.weapon;
+          
           setTimeout(
             this.animateStatus,
             interval,
@@ -389,8 +392,10 @@ class PlayerClass {
             totalFrames,
             backDelay,
             function () {
-              self.ammo[self.weapon].currentAmmo =
-                self.ammo[self.weapon].maxAmmo;
+              self.ammo[reloadWeapon].currentAmmo =
+                self.ammo[reloadWeapon].maxAmmo;
+          
+              self.ammo[reloadWeapon].reserveAmmo--;
             },
           );
           if (this.onreload) {
