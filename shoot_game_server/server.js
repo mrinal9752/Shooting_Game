@@ -484,13 +484,20 @@ function admitJoiningConnection(joining) {
   );
 }
 
-  // Start the global round timer when the first participant joins.
+  // ------------------------------------------------------------
+  // START GAME TIMER ON FIRST PARTICIPANT ONLY
+  // ------------------------------------------------------------
+  
   if (!roundsStarted) {
     roundsStarted = true;
+  
+    // Start the round only now.
+    // This must be the exact moment the first participant
+    // successfully enters the game.
     rounds.start();
   
     console.log(
-      "Game timer started: first participant joined.",
+      "GAME STARTED: first participant joined.",
     );
   }
 
