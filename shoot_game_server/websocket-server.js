@@ -19,14 +19,22 @@ module.exports = function createWebSocketServer(port) {
       ? privateConfig.HOST
       : "127.0.0.1";
 
-  const server = http.createServer(function (request, response) {
-    console.log(
-      new Date() + " Received request for " + request.url,
-    );
+const server = http.createServer(function (request, response) {
+  console.log(
+    new Date() + " Received request for " + request.url,
+  );
 
-    response.writeHead(404);
-    response.end();
-  });
+  if (request.url === "/health" || request.url === "/") {
+    response.writeHead(200, {
+      "Content-Type": "text/plain",
+    });
+    response.end("OK");
+    return;
+  }
+
+  response.writeHead(404);
+  response.end();
+});
 
   // Prevent a confusing unhandled EADDRINUSE crash.
   server.on("error", function (error) {
