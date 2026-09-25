@@ -411,6 +411,7 @@ function admitJoiningConnection(joining) {
   state.clients[id] = client;
   state.clients.push(id);
   state.userCount++;
+  adminDashboard.broadcastStats();
 
   console.log(
     "player joined: " +
@@ -498,6 +499,7 @@ function removeJoinedClient(client) {
   }
 
   state.userCount--;
+  adminDashboard.broadcastStats();
 
   if (state.userCount < 0) {
     state.userCount = 0;
