@@ -88,6 +88,7 @@ class NetworkClass {
       participantId: String(data.participantId),
       accessCode: String(data.accessCode),
       name: String(data.name),
+      sessionToken: String(data.sessionToken || ""),
     };
   } catch (e) {
     return null;
@@ -95,10 +96,35 @@ class NetworkClass {
 }
 
 saveLogin(name, participantId, accessCode) {
+  let sessionToken = "";
+  
+  try {
+    sessionToken =
+      sessionStorage.getItem(
+        "flux_recruitment_session_token"
+      ) || "";
+  
+    if (!sessionToken) {
+      sessionToken =
+        crypto.randomUUID();
+  
+      sessionStorage.setItem(
+        "flux_recruitment_session_token",
+        sessionToken
+      );
+    }
+  } catch (e) {
+    sessionToken =
+      String(Date.now()) +
+      "-" +
+      Math.random().toString(36).slice(2);
+  }
+  
   const session = {
     name: String(name).trim(),
     participantId: String(participantId).trim().toUpperCase(),
     accessCode: String(accessCode).trim(),
+    sessionToken: sessionToken,
   };
 
   this.savedLogin = session;
@@ -485,6 +511,10 @@ joinGame(name, participantId, accessCode, isAutoJoin) {
         name: name,
         participantId: participantId,
         accessCode: accessCode,
+        sessionToken:
+          this.savedLogin
+            ? this.savedLogin.sessionToken
+            : "",
       },
     }),
   );
