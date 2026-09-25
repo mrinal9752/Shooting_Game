@@ -50,6 +50,10 @@ let roundsStarted = false;
 // authenticated/admitted as game players.
 const joiningConnections = new Set();
 
+// Active participant sessions.
+// One participant ID can have only one active game connection.
+const participantSessions = new Map();
+
 const privateServer = config.PRIVATE_SERVER || {
   ENABLED: false,
   MAX_PLAYERS: 20,
