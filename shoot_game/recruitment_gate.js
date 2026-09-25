@@ -14,10 +14,43 @@ class JoinGateClass {
     this.accessCodeInput =
       document.getElementById("accessCode");
 
+    this.toggleAccessCode =
+  document.getElementById("toggleAccessCode");
+
     this.status =
       document.getElementById("joinStatus");
 
     var self = this;
+
+    if (this.toggleAccessCode && this.accessCodeInput) {
+  this.toggleAccessCode.addEventListener(
+    "click",
+    function () {
+      const isHidden =
+        self.accessCodeInput.type === "password";
+
+      self.accessCodeInput.type =
+        isHidden ? "text" : "password";
+
+      self.toggleAccessCode.textContent =
+        isHidden ? "🙈" : "👁";
+
+      self.toggleAccessCode.setAttribute(
+        "aria-label",
+        isHidden
+          ? "Hide access code"
+          : "Show access code",
+      );
+
+      self.toggleAccessCode.setAttribute(
+        "aria-pressed",
+        String(isHidden),
+      );
+
+      self.accessCodeInput.focus();
+    },
+  );
+}
 
     // The game listens for mouse and keyboard events on the whole window.
     // Keep those controls from cancelling focus and typing in this HTML form.
