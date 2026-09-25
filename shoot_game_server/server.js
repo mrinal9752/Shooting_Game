@@ -43,6 +43,9 @@ chatStore.append({
 
 let connectionCount = 0;
 
+// The round timer starts only when the first participant joins.
+let roundsStarted = false;
+
 // Connections that have opened a WebSocket but have not yet been
 // authenticated/admitted as game players.
 const joiningConnections = new Set();
@@ -411,6 +414,17 @@ function admitJoiningConnection(joining) {
   state.clients[id] = client;
   state.clients.push(id);
   state.userCount++;
+
+  // Start the global round timer when the first participant joins.
+  if (!roundsStarted) {
+    roundsStarted = true;
+    rounds.start();
+  
+    console.log(
+      "Game timer started: first participant joined.",
+    );
+  }
+
   adminDashboard.broadcastStats();
 
   console.log(
@@ -997,4 +1011,3 @@ rounds.onRoundEnd(function () {
 
 items.start();
 monsters.start();
-rounds.start();
