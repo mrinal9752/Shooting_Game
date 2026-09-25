@@ -531,6 +531,7 @@ class SystemClass {
             self.networkClass.sendPositionChanged(
               player.getPositionX(),
               player.getPositionY(),
+              true,
             );
           }
         }
