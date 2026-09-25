@@ -23,6 +23,9 @@ class NpcClass {
     this.attackFrame = undefined;
     this.lastMoveTime = 0;
     this.moving = false;
+
+    this.lastFrameTime = 0;
+    this.targetReceivedTime = 0;
   }
 
   getId() {
@@ -75,6 +78,9 @@ class NpcClass {
   setTarget(x, y, direction) {
     this.targetX = x;
     this.targetY = y;
+  
+    this.targetReceivedTime = performance.now();
+  
     if (direction !== undefined) {
       this.direction = direction;
     }
@@ -88,38 +94,80 @@ class NpcClass {
 
   frame() {
     const now = performance.now();
-
-    // 위치 보간(서버 30fps 갱신을 부드럽게). 큰 점프(리스폰 등)는 즉시 스냅한다.
+  
+    if (!this.lastFrameTime) {
+      this.lastFrameTime = now;
+    }
+  
+    const dt = Math.min(
+      (now - this.lastFrameTime) / 1000,
+      0.05,
+    );
+  
+    this.lastFrameTime = now;
+  
     const dx = this.targetX - this.x;
     const dy = this.targetY - this.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+  
+    const distance = Math.sqrt(
+      dx * dx + dy * dy,
+    );
+  
+    // Large position correction:
+    // teleport/snap instead of slowly interpolating.
     if (distance > 300) {
       this.x = this.targetX;
       this.y = this.targetY;
       this.moving = false;
-    } else if (distance > 0.5) {
-      this.x += dx * 0.4;
-      this.y += dy * 0.4;
+    }
+  
+    // Normal movement.
+    else if (distance > 0.5) {
+      // Frame-rate independent smoothing.
+      const smoothing =
+        1 - Math.exp(-18 * dt);
+  
+      this.x += dx * smoothing;
+      this.y += dy * smoothing;
+  
       this.lastMoveTime = now;
       this.moving = true;
-    } else {
+    }
+  
+    // Close enough to target.
+    else {
       this.x = this.targetX;
       this.y = this.targetY;
-      // 마지막 이동 직후 잠깐은 이동 애니메이션을 유지한다(깜빡임 방지)
-      this.moving = now - this.lastMoveTime < 150;
+  
+      this.moving =
+        now - this.lastMoveTime < 150;
     }
-
-    // 공격 애니메이션(9프레임 @10fps)을 한 번 재생하고 원래 상태로 복귀
+  
+    // ------------------------------------------------------------
+    // ATTACK ANIMATION
+    // ------------------------------------------------------------
+  
     if (this.status === "meleeattack") {
-      const frame = Math.floor((now - this.attackStartTime) / (1000 / 10));
+      const frame = Math.floor(
+        (now - this.attackStartTime) /
+        (1000 / 10),
+      );
+  
       if (frame >= 9) {
-        this.status = this.moving ? "move" : "idle";
+        this.status =
+          this.moving
+            ? "move"
+            : "idle";
+  
         this.attackFrame = undefined;
       } else {
         this.attackFrame = frame;
       }
     } else {
-      this.status = this.moving ? "move" : "idle";
+      this.status =
+        this.moving
+          ? "move"
+          : "idle";
     }
   }
 }
