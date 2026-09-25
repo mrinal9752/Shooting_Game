@@ -155,4 +155,6 @@ const map_office_data =
     ]
 };
 
-module.exports.mapData = map_office_data;
+if (typeof module !== "undefined") {
+  module.exports.mapData = map_office_data;
+}
