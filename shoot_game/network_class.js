@@ -13,6 +13,23 @@ class NetworkClass {
     this.reconnectCount = 0;
     this.latency = 0;
     this.playerName = undefined;
+  
+    // Remember participant login on this device/browser.
+    this.savedLogin = this.loadSavedLogin();
+    this.joinAttempting = false;
+  
+    // Reduce network traffic.
+    this.positionSendInterval = 1000 / 15;
+    this.directionSendInterval = 1000 / 15;
+    this.lastPositionSentAt = 0;
+    this.lastDirectionSentAt = 0;
+  
+    // Lightweight reconnect strategy.
+    this.reconnectDelay = 1000;
+    this.maxReconnectDelay = 15000;
+    this.reconnectTimer = undefined;
+    this.latencyTimer = undefined;
+  
     this.joinGate = new JoinGateClass(this);
     this.initializeWebSocket();
   }
@@ -54,35 +71,144 @@ class NetworkClass {
     return this.playerName;
   }
 
+  loadSavedLogin() {
+  try {
+    const raw = localStorage.getItem("flux_recruitment_session_v1");
+    if (!raw) {
+      return null;
+    }
+
+    const data = JSON.parse(raw);
+
+    if (!data || !data.participantId || !data.accessCode || !data.name) {
+      return null;
+    }
+
+    return {
+      participantId: String(data.participantId),
+      accessCode: String(data.accessCode),
+      name: String(data.name),
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+saveLogin(name, participantId, accessCode) {
+  const session = {
+    name: String(name).trim(),
+    participantId: String(participantId).trim().toUpperCase(),
+    accessCode: String(accessCode).trim(),
+  };
+
+  this.savedLogin = session;
+
+  try {
+    localStorage.setItem(
+      "flux_recruitment_session_v1",
+      JSON.stringify(session),
+    );
+  } catch (e) {
+    // Ignore storage errors.
+  }
+}
+
+clearSavedLogin() {
+  this.savedLogin = null;
+
+  try {
+    localStorage.removeItem("flux_recruitment_session_v1");
+  } catch (e) {
+    // Ignore storage errors.
+  }
+}
+
+scheduleReconnect() {
+  if (this.reconnectTimer) {
+    clearTimeout(this.reconnectTimer);
+  }
+
+  const delay = this.reconnectDelay;
+
+  this.reconnectDelay = Math.min(
+    Math.ceil(this.reconnectDelay * 1.8),
+    this.maxReconnectDelay,
+  );
+
+  const self = this;
+
+  this.reconnectTimer = setTimeout(function () {
+    self.initializeWebSocket();
+  }, delay);
+}
+
+scheduleLatencyCheck() {
+  if (this.latencyTimer) {
+    clearTimeout(this.latencyTimer);
+  }
+
+  const self = this;
+
+  this.latencyTimer = setTimeout(function () {
+    self.checkLatency(self);
+  }, 5000);
+}
+
+autoJoinSavedLogin() {
+  if (!this.savedLogin) {
+    return false;
+  }
+
+  this.joinAttempting = true;
+
+  this.joinGame(
+    this.savedLogin.name,
+    this.savedLogin.participantId,
+    this.savedLogin.accessCode,
+    true,
+  );
+
+  return true;
+}
+
   onOpen(e) {
     this.isConnected = true;
+  
     if (this.connected) {
       this.connected();
     }
-
-    setTimeout(this.checkLatency, 1000, this);
+  
+    const self = this;
+  
+    setTimeout(function () {
+      if (!self.autoJoinSavedLogin()) {
+        self.scheduleLatencyCheck();
+      }
+    }, 50);
   }
 
   onClose(e) {
     if (this.isConnected) {
       this.isConnected = false;
+  
       if (this.disconnected) {
         this.disconnected();
       }
     }
-
+  
     this.reconnectCount++;
-
+  
     if (this.tryreconnect) {
       this.tryreconnect(this.reconnectCount);
     }
-
-    var self = this;
+  
     this.playerName = undefined;
+    this.joinAttempting = false;
+  
+    // Do NOT clear saved participant login.
     this.joinGate.showConnecting();
-    setTimeout(function () {
-      self.initializeWebSocket();
-    }, 1000);
+  
+    this.scheduleReconnect();
   }
 
   onMessage(e) {
@@ -90,27 +216,56 @@ class NetworkClass {
     //console.log(e.data);
     switch (msg.type) {
       case "player_login_required":
-        this.joinGate.showLogin();
+        // Automatically reuse the saved participant login.
+        if (this.savedLogin && !this.joinAttempting) {
+          this.autoJoinSavedLogin();
+        } else if (!this.savedLogin) {
+          this.joinGate.showLogin();
+        }
         break;
+      
       case "player_joined":
+        this.joinAttempting = false;
         this.playerName = msg.data.name;
+      
+        if (this.savedLogin) {
+          this.saveLogin(
+            msg.data.name,
+            this.savedLogin.participantId,
+            this.savedLogin.accessCode,
+          );
+        }
+      
+        // Successful connection: reset reconnect backoff.
+        this.reconnectDelay = 1000;
+        this.reconnectCount = 0;
+      
+        this.scheduleLatencyCheck();
         this.joinGate.showJoined();
         break;
-      case "player_join_error":
-        this.joinGate.showError(msg.data.message);
+      
+      case "player_join_error": {
+        this.joinAttempting = false;
+      
+        const message =
+          msg.data && msg.data.message
+            ? String(msg.data.message)
+            : "Unable to join the game.";
+      
+        // Only forget the login when the credentials themselves are invalid.
+        if (/invalid participant id or access code/i.test(message)) {
+          this.clearSavedLogin();
+        }
+      
+        this.joinGate.showError(message);
         break;
-      case "recruitment_login_required":
-      case "recruitment_error":
-      case "recruitment_approved":
-        this.joinGate.showError(
-          "The game server is using an old version. Restart the server from the Shooting_Game folder.",
-        );
-        break;
+      }
+      
       case "echo":
         if (msg.data.tick) {
           const now = performance.now();
           this.latency = Math.floor(now - msg.data.tick);
-          setTimeout(this.checkLatency, 1000, this);
+          this.scheduleLatencyCheck();
         }
         break;
       case "id":
@@ -302,16 +457,26 @@ class NetworkClass {
     );
   }
 
-joinGame(name, participantId, accessCode) {
+joinGame(name, participantId, accessCode, isAutoJoin) {
   if (
     !this.webSocket ||
     this.webSocket.readyState !== WebSocket.OPEN
   ) {
     this.joinGate.showError(
-      "The game server is not ready. Start the server, then refresh this page.",
+      "The game server is not ready. Please wait a moment.",
     );
     return;
   }
+
+  if (!name || !participantId || !accessCode) {
+    this.joinGate.showError(
+      "Participant ID, access code and name are required.",
+    );
+    return;
+  }
+
+  this.saveLogin(name, participantId, accessCode);
+  this.joinAttempting = true;
 
   this.webSocket.send(
     JSON.stringify({
@@ -340,9 +505,26 @@ joinGame(name, participantId, accessCode) {
     );
   }
 
-  sendPositionChanged(x, y) {
+  sendPositionChanged(x, y, force) {
+    const now = performance.now();
+  
+    if (
+      !force &&
+      now - this.lastPositionSentAt < this.positionSendInterval
+    ) {
+      return;
+    }
+  
+    this.lastPositionSentAt = now;
+  
     this.webSocket.send(
-      JSON.stringify({ type: "user_position", data: { x: x, y: y } }),
+      JSON.stringify({
+        type: "user_position",
+        data: {
+          x: x,
+          y: y,
+        },
+      }),
     );
   }
 
@@ -356,10 +538,23 @@ joinGame(name, participantId, accessCode) {
   }
 
   sendDirectionChanged(direction) {
+    const now = performance.now();
+  
+    if (
+      now - this.lastDirectionSentAt <
+      this.directionSendInterval
+    ) {
+      return;
+    }
+  
+    this.lastDirectionSentAt = now;
+  
     this.webSocket.send(
       JSON.stringify({
         type: "user_direction",
-        data: { direction: direction },
+        data: {
+          direction: direction,
+        },
       }),
     );
   }
