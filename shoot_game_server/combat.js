@@ -12,6 +12,7 @@ const config = require("./config");
 const state = require("./state");
 const net = require("./net");
 const rounds = require("./rounds");
+const adminDashboard = require("./admin-dashboard");
 const {
   shootIntersection,
   getDistance,
@@ -190,7 +191,13 @@ function applyDamage(hitObject, damage, provider, providerId, weapon) {
   const providerObject = state.resolvePlayer(providerId);
   if (providerObject) {
     providerObject.kill++;
-    net.sendAll("user_kill", { id: providerId, kill: providerObject.kill });
+    
+    net.sendAll("user_kill", {
+      id: providerId,
+      kill: providerObject.kill,
+    });
+    
+    adminDashboard.broadcastStats();
     if (providerObject.onScoredKill) {
       providerObject.onScoredKill();
     }
@@ -204,6 +211,7 @@ function applyDamage(hitObject, damage, provider, providerId, weapon) {
   }
 
   hitObject.death++;
+  adminDashboard.broadcastStats();
 
   // AI 등 서버가 직접 리스폰시키는 플레이어 (사람은 클라이언트가 user_init 으로 리스폰)
   if (hitObject.respawn) {
