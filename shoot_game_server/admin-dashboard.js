@@ -154,7 +154,10 @@ function send(ws, type, data) {
 }
 
 function sendSnapshot(ws) {
-  send(ws, "admin_stats", getStatsSnapshot());
+  send(ws, "admin_stats", {
+    liveParticipants: state.userCount,
+    players: getStatsSnapshot(),
+  });
 }
 
 function broadcastStats() {
