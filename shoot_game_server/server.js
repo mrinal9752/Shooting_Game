@@ -87,6 +87,7 @@ wss.on("connection", function connection(ws, request) {
     name: "",
     participantId: "",
     participantCode: "",
+    participantSessionToken: "",
     participant: undefined,
     client: undefined,
   };
@@ -183,7 +184,14 @@ function handleJoinMessage(joining, msg) {
     const accessCode =
       normalizeAccessCode(data.accessCode);
 
-    if (!participantId || !accessCode) {
+    const sessionToken =
+      normalizeSessionToken(data.sessionToken);
+
+      if (
+        !participantId ||
+        !accessCode ||
+        !sessionToken
+      ) {
       sendToSocket(joining.ws, "player_join_error", {
         message:
           "Participant ID and access code are required.",
@@ -223,18 +231,44 @@ function handleJoinMessage(joining, msg) {
 
     // Do not allow the same participant account to be used
     // by two browsers at the same time.
-    if (isParticipantAlreadyConnected(participant.id)) {
-      sendToSocket(joining.ws, "player_join_error", {
-        message:
-          "This participant is already connected.",
-      });
-
-      console.log(
-        "rejected duplicate participant: " +
-          participant.id,
-      );
-
-      return;
+    const existingSession =
+      participantSessions.get(participant.id);
+    
+    if (existingSession) {
+      // Same browser tab/session: this is most likely a refresh.
+      if (
+        existingSession.sessionToken ===
+        sessionToken
+      ) {
+        console.log(
+          "reconnecting participant: " +
+            participant.id,
+        );
+    
+        if (existingSession.client) {
+          removeJoinedClient(
+            existingSession.client,
+          );
+        } else if (
+          existingSession.ws &&
+          existingSession.ws.readyState === 1
+        ) {
+          existingSession.ws.close();
+        }
+      } else {
+        // Different browser/tab: do not allow takeover.
+        sendToSocket(joining.ws, "player_join_error", {
+          message:
+            "This participant is already connected.",
+        });
+    
+        console.log(
+          "rejected duplicate participant: " +
+            participant.id,
+        );
+    
+        return;
+      }
     }
 
     // Enforce human participant limit.
@@ -256,6 +290,8 @@ function handleJoinMessage(joining, msg) {
 
     joining.participantId = participant.id;
     joining.participantCode = accessCode;
+    joining.participantSessionToken =
+      sessionToken;
     joining.participant = participant;
   }
 
@@ -306,18 +342,18 @@ function normalizeParticipantId(value) {
   return id;
 }
 
-function normalizeAccessCode(value) {
+function normalizeSessionToken(value) {
   if (typeof value !== "string") {
     return undefined;
   }
 
-  const code = value.trim();
+  const token = value.trim();
 
-  if (code.length < 4 || code.length > 128) {
+  if (token.length < 8 || token.length > 256) {
     return undefined;
   }
 
-  return code;
+  return token;
 }
 
 function findParticipant(participantId) {
@@ -394,6 +430,10 @@ function admitJoiningConnection(joining) {
     participantId:
       joining.participantId || undefined,
 
+    participantSessionToken:
+      joining.participantSessionToken ||
+      undefined,
+
     direction: 0,
     character: 0,
     weapon: "",
@@ -418,6 +458,18 @@ function admitJoiningConnection(joining) {
   state.clients[id] = client;
   state.clients.push(id);
   state.userCount++;
+
+  if (client.participantId) {
+  participantSessions.set(
+    client.participantId,
+    {
+      client: client,
+      ws: client.ws,
+      sessionToken:
+        client.participantSessionToken,
+    },
+  );
+}
 
   // Start the global round timer when the first participant joins.
   if (!roundsStarted) {
@@ -495,6 +547,12 @@ function sendInitialSnapshot(client) {
 // ------------------------------------------------------------
 
 function removeJoinedClient(client) {
+  if (!client || client._removed) {
+    return;
+  }
+
+  client._removed = true;
+
   console.log(
     "user " +
       client.id +
@@ -507,7 +565,20 @@ function removeJoinedClient(client) {
       ),
   );
 
+    if (
+    client.participantId &&
+    participantSessions.get(
+      client.participantId,
+    )?.client === client
+  ) {
+    participantSessions.delete(
+      client.participantId,
+    );
+  }
+  
   delete state.clients[client.id];
+
+  
 
   const index =
     state.clients.indexOf(client.id);
