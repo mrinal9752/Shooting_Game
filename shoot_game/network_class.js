@@ -73,7 +73,7 @@ class NetworkClass {
 
   loadSavedLogin() {
   try {
-    const raw = localStorage.getItem("flux_recruitment_session_v1");
+    const raw = sessionStorage.getItem("flux_recruitment_session_v1");
     if (!raw) {
       return null;
     }
@@ -104,7 +104,7 @@ saveLogin(name, participantId, accessCode) {
   this.savedLogin = session;
 
   try {
-    localStorage.setItem(
+   sessionStorage.setItem(
       "flux_recruitment_session_v1",
       JSON.stringify(session),
     );
@@ -117,7 +117,7 @@ clearSavedLogin() {
   this.savedLogin = null;
 
   try {
-    localStorage.removeItem("flux_recruitment_session_v1");
+    sessionStorage.removeItem("flux_recruitment_session_v1");
   } catch (e) {
     // Ignore storage errors.
   }
