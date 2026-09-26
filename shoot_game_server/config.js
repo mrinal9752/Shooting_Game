@@ -6,7 +6,7 @@ PORT: Number(process.env.PORT) || 8082,
 PRIVATE_SERVER: {
   ENABLED: true,
   HOST: "0.0.0.0",
-  MAX_PLAYERS: 50,
+  MAX_PLAYERS: 100,
   PARTICIPANTS: [
     {
       id: "P001",
@@ -208,6 +208,210 @@ PRIVATE_SERVER: {
       id: "P050",
       code: "FLUX050",
     },
+    {
+      id: "P050",
+      code: "FLUX050",
+    },
+    {
+      id: "P051",
+      code: "FLUX051",
+    },
+    {
+      id: "P052",
+      code: "FLUX052",
+    },
+    {
+      id: "P053",
+      code: "FLUX053",
+    },
+    {
+      id: "P054",
+      code: "FLUX054",
+    },
+    {
+      id: "P055",
+      code: "FLUX055",
+    },
+    {
+      id: "P056",
+      code: "FLUX056",
+    },
+    {
+      id: "P057",
+      code: "FLUX057",
+    },
+    {
+      id: "P058",
+      code: "FLUX058",
+    },
+    {
+      id: "P059",
+      code: "FLUX059",
+    },
+    {
+      id: "P060",
+      code: "FLUX060",
+    },
+    {
+      id: "P061",
+      code: "FLUX061",
+    },
+    {
+      id: "P062",
+      code: "FLUX062",
+    },
+    {
+      id: "P063",
+      code: "FLUX063",
+    },
+    {
+      id: "P064",
+      code: "FLUX064",
+    },
+    {
+      id: "P065",
+      code: "FLUX065",
+    },
+    {
+      id: "P066",
+      code: "FLUX066",
+    },
+    {
+      id: "P067",
+      code: "FLUX067",
+    },
+    {
+      id: "P068",
+      code: "FLUX068",
+    },
+    {
+      id: "P069",
+      code: "FLUX069",
+    },
+    {
+      id: "P070",
+      code: "FLUX070",
+    },
+    {
+      id: "P071",
+      code: "FLUX071",
+    },
+    {
+      id: "P072",
+      code: "FLUX072",
+    },
+    {
+      id: "P073",
+      code: "FLUX073",
+    },
+    {
+      id: "P074",
+      code: "FLUX074",
+    },
+    {
+      id: "P075",
+      code: "FLUX075",
+    },
+    {
+      id: "P076",
+      code: "FLUX076",
+    },
+    {
+      id: "P077",
+      code: "FLUX077",
+    },
+    {
+      id: "P078",
+      code: "FLUX078",
+    },
+    {
+      id: "P079",
+      code: "FLUX079",
+    },
+    {
+      id: "P080",
+      code: "FLUX080",
+    },
+    {
+      id: "P081",
+      code: "FLUX081",
+    },
+    {
+      id: "P082",
+      code: "FLUX082",
+    },
+    {
+      id: "P083",
+      code: "FLUX083",
+    },
+    {
+      id: "P084",
+      code: "FLUX084",
+    },
+    {
+      id: "P085",
+      code: "FLUX085",
+    },
+    {
+      id: "P086",
+      code: "FLUX086",
+    },
+    {
+      id: "P087",
+      code: "FLUX087",
+    },
+    {
+      id: "P088",
+      code: "FLUX088",
+    },
+    {
+      id: "P089",
+      code: "FLUX089",
+    },
+    {
+      id: "P090",
+      code: "FLUX090",
+    },
+    {
+      id: "P091",
+      code: "FLUX091",
+    },
+    {
+      id: "P092",
+      code: "FLUX092",
+    },
+    {
+      id: "P093",
+      code: "FLUX093",
+    },
+    {
+      id: "P094",
+      code: "FLUX094",
+    },
+    {
+      id: "P095",
+      code: "FLUX095",
+    },
+    {
+      id: "P096",
+      code: "FLUX096",
+    },
+    {
+      id: "P097",
+      code: "FLUX097",
+    },
+    {
+      id: "P098",
+      code: "FLUX098",
+    },
+    {
+      id: "P099",
+      code: "FLUX099",
+    },
+    {
+      id: "P100",
+      code: "FLUX100",
+    }
     
 
   ],
